@@ -1,0 +1,28 @@
+#!/usr/bin/perl
+#
+# Author: Robert Fielding <fieldingrp@gmail.com>
+#
+# Quick comandline version one-line histogram
+#
+# cat /var/log/system.log | perl -MDate::Parse -ne '($t) = ( /(\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2})/ ); $ts = str2time($t); $int++; if ($ts-$p >= ($ri||3600)) { printf("%02d:%02d:%02d %10.2f %s\n", (localtime($p))[2,1,0], $int, "." x ($int/(1000/80))); $p=$ts; $int=0;}'
+#
+use strict;
+use warnings;
+use Date::Parse;
+
+my $reporting_interval = 3600.0; # seconds
+my $this_interval = 0;
+my $prev_ts = 0;
+
+while (<>) {
+    # Mon DD HH:MM:SS
+    if (/(\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2})/) {
+        my $ts = str2time($1)."\n";
+        $this_interval ++;
+        if ($ts - $prev_ts >= $reporting_interval) {
+            printf("%02d:%02d:%02d %10.2f %s\n", (localtime($prev_ts))[2,1,0], $this_interval, '.' x ($this_interval/(1000/80)));
+            $prev_ts = $ts;
+            $this_interval = 0;
+        }
+    }
+}
