@@ -4,28 +4,55 @@
 #
 # Quick comandline version one-line histogram
 #
-# cat /var/log/system.log | perl -MDate::Parse -ne '($t) = ( /(\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2})/ ); $ts = str2time($t); $int++; if ($ts-$p >= ($ri||3600)) { printf("%02d:%02d:%02d %10.2f %s\n", (localtime($p))[2,1,0], $int, "." x ($int/(1000/80))); $p=$ts; $int=0;}'
+# cat /var/log/system.log | perl -MDate::Parse -ne '($t) = ( /(\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2})/ ); $ts = str2time($t); $int++; if ($ts-$p >= ($ri||3600) ||eof) { printf("%02d:%02d:%02d %10.2f %s\n", (localtime($p))[2,1,0], $int, "." x ($int/(1000/45))); $p=$ts; $int=0;}'
 #
 use strict;
 use warnings;
 use Date::Parse;
+use Getopt::Long;
 
-my $interval = 3600.0; # seconds
+my $graph = 1000;
+my $start;
+my $end;
+my $interval = 3600 ;
+GetOptions (
+    "graph=i"    => \$graph,
+    "start=i"    => \$start,
+    "end=i"      => \$end,
+    "interval=i" => \$interval);
+
 my $counter = 0;
 my $last = 0;
+# snap start/end time to interval
+$start = int($start / $interval) * $interval if $start;
+$end = int($end / $interval) * $interval if $end;
 
-while (<>) {
-    # Mon DD HH:MM:SS
-    if (/(\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2})/) {
-        my $ts = str2time($1);
-        $counter ++;
-        if ($ts - $last >= $interval) {
-            printf("%02d:%02d:%02d %10.2f %s\n",
-                (localtime(int($ts/$interval)*$interval))[2,1,0],
-                $counter,
-                '.' x ($counter/(1000/80)));
-            $last = $ts;
-            $counter = 0;
-        }
+sub mktimestamp { my ($str) = @_;
+    my $ts ;
+    # Mon DD HH:MM:SS, 2016-01-03T00:00:00
+    if ($str =~ /(\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}|\d{4}\-\d{2}\-\d{2}T\d{2}:\d{2}:\d{2}\S+)/) {
+        $ts = str2time($1);
+    } elsif ($str =~ /(\d{10}[\.\d]*)/) {
+        $ts = $1;
+    }
+    return $ts;
+}
+
+while (my $line = <>) {
+    my $timestamp = mktimestamp($line);
+    next unless $timestamp;
+    $timestamp = int($timestamp / $interval) * $interval;
+    next if $start && $start > $timestamp;
+    last if $end && $end < $timestamp;
+
+    $counter ++;
+    if ($timestamp - $last >= $interval || eof) {
+        $timestamp += $interval if eof;
+        printf("%02d:%02d:%02d %10.2f %s\n",
+            (localtime(int($timestamp/$interval)*$interval))[2,1,0],
+            $counter,
+            '.' x ($counter/($graph/45)));
+        $last = $timestamp;
+        $counter = 0;
     }
 }
