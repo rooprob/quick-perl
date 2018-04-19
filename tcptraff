@@ -1,0 +1,1 @@
+sudo tcpdump -i en0 -nn -tt  | perl -ne '($ts) = (/^([\d\.]+)/); ($l) = (/length (\d+)/); $int+=$l ; if ($ts-$p >= 1 || eof) { printf("%02d:%02d:%02d %10.2f Mbytes/s %s\n", (localtime($p))[2,1,0], $int/1024/1024, "." x ($int/1024/1024)); $p=$ts; $int=0;}'

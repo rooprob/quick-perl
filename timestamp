@@ -1,0 +1,26 @@
+#!/usr/bin/env perl -w
+
+use strict;
+
+use Date::Parse;
+use POSIX;
+
+die ('usage: $0 <time>') unless @ARGV ;
+
+my $ts ;
+my $input = join(' ', @ARGV);
+if ($input =~ /^(\d{10}(?:\.\d+)?)$/) {
+	$ts = $input ;
+} elsif ($input =~ /^(\d{13})$/) {
+        $ts = int($input / 1000);
+} else {
+	$ts = str2time($input);
+        die ("failed to parse $input") unless $ts;
+}
+
+printf("Input string\t:\t%s\n", $input);
+printf("timestamp \t:\t%d\n", $ts);
+printf("%s\n", POSIX::strftime("%F %T +0000 UTC", gmtime($ts)));
+printf("%s\n", POSIX::strftime("%F %T %z %Z", localtime($ts)));
+printf("%s\n", POSIX::strftime("%A, %B %d, %Y %H:%M:%S UTC", gmtime($ts)));
+printf("%s\n", POSIX::strftime("%A, %B %d, %Y %H:%M:%S %Z", localtime($ts)));
