@@ -1,0 +1,45 @@
+#!/usr/bin/env perl -w
+# Normalizes timestamp and provides a duration interval.
+#
+# Takes a file format <timestamp> <TAB> <description>
+#
+# Author: Rob Fielding <fieldingrp@gmail.com>
+#
+use strict;
+
+use Date::Parse;
+use POSIX;
+
+die ('usage: $0 <deply.txt>') unless @ARGV ;
+my $start = 0;
+
+while (my $line = <>) {
+        chomp($line);
+
+        my ($t, $desc) = split(/\t/, $line);
+	my $ts = str2time($t);
+
+        $start = $ts if $start == 0;
+        printf("%s\t%d\t%s\n",
+                POSIX::strftime("%F %T %z %Z", localtime($ts)),
+                ($ts - $start) / 60,
+                $desc
+        );
+}
+#my $ts ;
+#my $input = join(' ', @ARGV);
+#if ($input =~ /^(\d{10}(?:\.\d+)?)$/) {
+#	$ts = $input ;
+#} elsif ($input =~ /^(\d{13})$/) {
+#        $ts = int($input / 1000);
+#} else {
+#	$ts = str2time($input);
+#        die ("failed to parse $input") unless $ts;
+#}
+#
+#printf("Input string\t:\t%s\n", $input);
+#printf("timestamp \t:\t%d\n", $ts);
+#printf("%s\n", POSIX::strftime("%F %T +0000 UTC", gmtime($ts)));
+#printf("%s\n", POSIX::strftime("%F %T %z %Z", localtime($ts)));
+#printf("%s\n", POSIX::strftime("%A, %B %d, %Y %H:%M:%S UTC", gmtime($ts)));
+#printf("%s\n", POSIX::strftime("%A, %B %d, %Y %H:%M:%S %Z", localtime($ts)));
