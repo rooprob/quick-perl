@@ -1,13 +1,4 @@
-/blib/
-/.build/
-_build/
-cover_db/
-inc/
-Build
-!Build/
-Build.bat
-.last_cover_stats
-/Makefile
+e
 /Makefile.old
 /MANIFEST.bak
 /META.yml

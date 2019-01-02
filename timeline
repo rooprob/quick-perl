@@ -10,36 +10,50 @@ use strict;
 use Date::Parse;
 use POSIX;
 
-die ('usage: $0 <deply.txt>') unless @ARGV ;
+die ('usage: $0 <deploy.txt>') unless @ARGV ;
+
+# Return tuple of hours and minutes taken.
+sub duration {
+    my ($minutes) = @_ ;
+
+    my $d_m = $minutes;
+    my $d_h = int($d_m / 60);
+    $d_m = $d_m - ($d_h*60);
+
+    return ($d_h, $d_m);
+}
+
+#########################################################################
+#                                                                       #
+#  Main                                                                 #
+#                                                                       #
+#########################################################################
 my $start = 0;
+my $last  = 0;
 
 while (my $line = <>) {
-        chomp($line);
+    chomp($line);
 
-        my ($t, $desc) = split(/\t/, $line);
-	my $ts = str2time($t);
+    # Split line on TAB, parse timestamp.
+    my ($t, $desc) = split(/\t/, $line);
+    my $ts = str2time($t);
 
-        $start = $ts if $start == 0;
-        printf("%s\t%d\t%s\n",
-                POSIX::strftime("%F %T %z %Z", localtime($ts)),
-                ($ts - $start) / 60,
-                $desc
+    # Sets final start time, if unset.
+    $start = $ts if $start == 0;
+    # Sets initial last time, if unset. Will update by end of this loop.
+    $last = $ts if $last == 0;
+
+    # Compute visual duration indicators.
+    my ($s_h, $s_m) = duration(($ts - $start) / 60);
+    my ($d_h, $d_m) = duration(($ts - $last) / 60);
+
+    printf("%s\t%ds\t%dh%dm\t%dh%dm\t%s\n",
+           POSIX::strftime("%F %T %z %Z", localtime($ts)),
+           ($ts - $start),
+           $s_h,$s_m,
+           $d_h,$d_m,
+           $desc
         );
+    # Update the last time tracker.
+    $last = $ts;
 }
-#my $ts ;
-#my $input = join(' ', @ARGV);
-#if ($input =~ /^(\d{10}(?:\.\d+)?)$/) {
-#	$ts = $input ;
-#} elsif ($input =~ /^(\d{13})$/) {
-#        $ts = int($input / 1000);
-#} else {
-#	$ts = str2time($input);
-#        die ("failed to parse $input") unless $ts;
-#}
-#
-#printf("Input string\t:\t%s\n", $input);
-#printf("timestamp \t:\t%d\n", $ts);
-#printf("%s\n", POSIX::strftime("%F %T +0000 UTC", gmtime($ts)));
-#printf("%s\n", POSIX::strftime("%F %T %z %Z", localtime($ts)));
-#printf("%s\n", POSIX::strftime("%A, %B %d, %Y %H:%M:%S UTC", gmtime($ts)));
-#printf("%s\n", POSIX::strftime("%A, %B %d, %Y %H:%M:%S %Z", localtime($ts)));
