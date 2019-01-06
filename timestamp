@@ -1,26 +1,39 @@
 #!/usr/bin/env perl -w
+# Collaborate more easily in distributed timezones.
+#
+# Provide the TZ=XXX environment for localtime.
+#
+# TZ=EST timestamp 2018-01-20 18:52:21 UTC
+#
+# Author: Robert Fielding <fieldingrp@gmail.com>
+# Date: A long time ago...
 
 use strict;
 
 use Date::Parse;
 use POSIX;
 
-die ('usage: $0 <time>') unless @ARGV ;
+die ('usage: $0 <time-string>') unless @ARGV ;
 
 my $ts ;
 my $input = join(' ', @ARGV);
-if ($input =~ /^(\d{10}(?:\.\d+)?)$/) {
-	$ts = $input ;
-} elsif ($input =~ /^(\d{13})$/) {
-        $ts = int($input / 1000);
-} else {
-	$ts = str2time($input);
-        die ("failed to parse $input") unless $ts;
-}
 
-printf("Input string\t:\t%s\n", $input);
-printf("timestamp \t:\t%d\n", $ts);
-printf("%s\n", POSIX::strftime("%F %T +0000 UTC", gmtime($ts)));
-printf("%s\n", POSIX::strftime("%F %T %z %Z", localtime($ts)));
-printf("%s\n", POSIX::strftime("%A, %B %d, %Y %H:%M:%S UTC", gmtime($ts)));
-printf("%s\n", POSIX::strftime("%A, %B %d, %Y %H:%M:%S %Z", localtime($ts)));
+if ($input =~ /^(\d{10}(?:\.\d+)?)$/) {
+    # Handle ten digit unix timestamp, with optional millis (disregarded).
+    $ts = $input ;
+} elsif ($input =~ /^(\d{13})$/) {
+    # Handle 13 digit unix timestamp, with included millis (disregarded).
+    # POSIX doesn't support millis, so we ignore.
+    $ts = int($input / 1000);
+} else {
+    # Attempt to parse a date/time string
+    $ts = str2time($input);
+}
+die ("failed to parse $input") unless $ts;
+
+printf("Input string:\t%s\n", $input);
+printf("Timestamp:\t%d\n", $ts);
+printf("GMT:\t%s\n", POSIX::strftime("%F %T +0000 UTC", gmtime($ts)));
+printf("GMT:\t%s\n", POSIX::strftime("%A, %B %d, %Y %H:%M:%S UTC", gmtime($ts)));
+printf("LOCAL:\t%s\n", POSIX::strftime("%F %T %z %Z", localtime($ts)));
+printf("LOCAL:\t%s\n", POSIX::strftime("%A, %B %d, %Y %H:%M:%S %Z", localtime($ts)));
